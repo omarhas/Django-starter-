@@ -1,3 +1,13 @@
+name: CI/CD Pipeline for Django App
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
 jobs:
   build:
     runs-on: ubuntu-latest
