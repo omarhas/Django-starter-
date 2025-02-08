@@ -1,0 +1,44 @@
+---
+- name: Deploy Django app using Docker
+  hosts: your_server_group
+  become: yes
+  vars:
+    docker_image_name: yourdockerhubusername/yourapp
+    docker_tag: "{{ docker_tag }}"  # This is passed from GitHub Actions
+
+  tasks:
+    # Step 1: Pull the Docker image with the tag
+    - name: Pull Docker image from Docker Hub
+      docker_image:
+        name: "{{ docker_image_name }}"
+        tag: "{{ docker_tag }}"
+        source: pull
+
+    # Step 2: Stop and remove any existing container
+    - name: Stop and remove old container
+      docker_container:
+        name: django-app
+        state: stopped
+        remove: yes
+      ignore_errors: yes  # Ignore errors if the container is not running
+
+    # Step 3: Start the new container
+    - name: Start new Docker container for Django app
+      docker_container:
+        name: django-app
+        image: "{{ docker_image_name }}:{{ docker_tag }}"
+        state: started
+        restart_policy: always
+        ports:
+          - "8000:8000"  # Adjust the port mapping as needed
+        env:
+          DJANGO_SECRET_KEY: "{{ secret_key }}"
+          DJANGO_DEBUG: "false"
+          DJANGO_ALLOWED_HOSTS: "yourdomain.com"
+
+    # Step 4: Clean up unused Docker images (optional)
+    - name: Remove old Docker images
+      docker_image:
+        name: "{{ docker_image_name }}"
+        tag: "{{ docker_tag }}"
+        state: absent
